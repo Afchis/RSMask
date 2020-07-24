@@ -48,6 +48,7 @@ class ScoreLabelHelper():
 		score_label = (ones + half) / 2
 		return score_label
 
+
 if __name__ == '__main__':
 	target = torch.rand([3, 128, 128])
 	search = torch.rand([3, 256, 256])
