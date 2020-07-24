@@ -92,7 +92,6 @@ class TrainYtb(Dataset):
 	def __getitem__(self, idx):
 		'''
 		TO DO:
-		** !!! make score label !!!
 		* Image.convert('RGB') if search and target gray scale.
 		* ImageOps.expand(search, border=self.border) add gray border.
 		'''
