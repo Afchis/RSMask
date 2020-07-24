@@ -11,6 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision
 import torchvision.transforms as transforms
 
+from utils.label_helper import ScoreLabelHelper
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_path", type=str, default="ignore/data/ytb_vos/train/", help = "data path")
@@ -26,6 +28,7 @@ class TrainYtb(Dataset):
 		self.path = args.data_path
 		self.json = train_json
 		self.border = (0, 280, 0, 280)
+		self.label_helper = ScoreLabelHelper()
 
 	def __len__(self):
 		return len(self.json)
@@ -34,7 +37,7 @@ class TrainYtb(Dataset):
 		'''
 		TODO:
 		* nearly always target image is search image, because we take the condition: 
-		    target image cant be smaller then search image.
+			'target image cant be smaller then search image.'
 		'''
 		target_anno = random.choice(self.json[idx]['object_anno'])
 		if target_anno['bbox'] == None:
@@ -88,7 +91,8 @@ class TrainYtb(Dataset):
 
 	def __getitem__(self, idx):
 		'''
-		TO DO: 
+		TO DO:
+		** !!! make score label !!!
 		* Image.convert('RGB') if search and target gray scale.
 		* ImageOps.expand(search, border=self.border) add gray border.
 		'''
@@ -119,11 +123,17 @@ class TrainYtb(Dataset):
 		search = self.pil_to_tensor(search)
 		target = self.pil_to_tensor(target)
 		mask = self.pil_to_tensor(mask)
-		return target, search, mask
+		# build score label
+		score_label = self.label_helper.build_score_label(target, mask)
+		return target, search, mask, score_label
 
 def main():
-	return print('TODO: DataLoader and show PIL.Images')
+	data = TrainYtb()
+	target, search, mask, score_label = data[16]
+	return score_label
+print('TODO: DataLoader and show PIL.Images')
 
 if __name__ == '__main__':
-	main()
+	score_label = main()
+	print(score_label)
 	
