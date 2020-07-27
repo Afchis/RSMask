@@ -1,59 +1,64 @@
 import torch
+import torch.nn.functional as F
 
 
 class ScoreLabelHelper():
 	def __init__(self):
-		self.search_size = 256
-		self.search_p3 = 32
+		self.Lpad = 256/4
+		self.Lcorr=5
+		self.Lstr = (2*self.Lpad)/(5-1)
+		self.Mpad = 256/8
+		self.Mcorr=17
+		self.Mstr = (256+2*self.Mpad-128)/(17-1)
+		self.Spad = 0
+		self.Scorr=25
+		self.Sstr = (256-64)/(25-1)
 
-	def round_up(self, num, div):
-		return int(num / div) + int(num % div > 0)
-
-	def backbone_outs(self, size):
-		p0 = self.round_up(size, 2)
-		p1 = self.round_up(p0, 2)
-		p2 = self.round_up(p1, 2)
-		p3 = p2
-		return p0, p1, p2, p3
-
-	def corr_feat_size(self, target):
-		target_size = target.size(2)
-		_, _, _, p3 = self.backbone_outs(target_size)
-		return p3
-
-	def conv_for_mask(self, target, mask):
+	def _size_list_(self, mask, size):
 		'''
-		kernel size = target size
+		Size_list --> [large, medium, small]
 		'''
-		p3 = self.corr_feat_size(target)
-		delta = self.search_size - target.size(2)
-		stride = delta / (p3 - 1)
+		if size == None:
+			size_list = [0, 0, 0]
+		elif size == 'large':
+			size_list = [1, 0, 0]
+		elif size == 'medium':
+			size_list = [0, 1, 0]
+		elif size == 'small':
+			size_list = [0, 0, 1]
+		else:
+			print('SizeError: Wrong size in json file!')
+			quit()
+		return size_list
+
+	def _build_label_(self, mask, size, corr_size, pad, stride):
+		mask = F.pad(input=mask, pad=(pad, pad, pad, pad), mode='constant', value=0)
 		j_tensors_list = list()
-		for j in range(p3):
+		for j in range(corr_size):
 			j_tensor = torch.tensor([])
-			for i in range(p3):
-				ij = mask[:, int(j*stride):int(j*stride+target.size(2)), int(i*stride):int(i*stride+target.size(2))].sum(dim=1).sum(dim=1)
+			for i in range(corr_size):
+				ij = mask[:, int(j*stride):int(j*stride+size), int(i*stride):int(i*stride+size)].sum(dim=1).sum(dim=1)
 				j_tensor = torch.cat([j_tensor, ij], dim=0)
 			j_tensors_list.append(j_tensor)
-		out_tensor = torch.stack(j_tensors_list).unsqueeze(0)
+		out_tensor = torch.stack(j_tensors_list)
 		return out_tensor
 
+	def BuildLabels(self, mask, size):
+		s_l = self._size_list_(mask, size)
+		large_score = self._build_label_(mask, size=256, corr_size=self.Lcorr, pad=int(self.Lpad), stride=self.Lstr)*s_l[0]
+		medium_score = self._build_label_(mask, size=128, corr_size=self.Mcorr, pad=int(self.Mpad), stride=self.Mstr)*s_l[1]
+		small_score = self._build_label_(mask, size=64, corr_size=self.Scorr, pad=int(self.Spad), stride=self.Sstr)*s_l[2]
+		score_list = [large_score, medium_score, small_score]
+		return torch.stack(score_list)
 
-	def build_score_label(self, target, mask):
-		out_tensor = self.conv_for_mask(target, mask)
-		max_value = out_tensor.max()
-		out_tensor = out_tensor / max_value
-		ones = (out_tensor == 1.).float()
-		half = (out_tensor >= 0.6).float()
-		score_label = (ones + half) / 2
-		return score_label
+
 
 
 if __name__ == '__main__':
-	target = torch.rand([3, 128, 128])
+	target = torch.rand([3, 256, 256])
 	search = torch.rand([3, 256, 256])
 	mask = torch.rand([1, 256, 256])
 	score_helper = ScoreLabelHelper()
-	out = score_helper.build_score_label(target, mask)
-	print(out)
+	out = score_helper.BuildLabels(mask, size='large')
+	print(out.shape)
 	

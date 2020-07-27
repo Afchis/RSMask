@@ -35,8 +35,15 @@ class TrainYtb(Dataset):
 		return len(self.json)
 
 	def target_choice(self, idx, search_anno):
+		'''
+		TODO:
+		* nearly always target image is search image, because we take the condition: 
+			'target image cant be smaller then search image.'
+		'''
 		target_anno = random.choice(self.json[idx]['object_anno'])
 		if target_anno['bbox'] == None:
+			target_anno = self.target_choice(idx, search_anno)
+		if target_anno['bbox'][1] < search_anno['bbox'][1] or target_anno['bbox'][3] < search_anno['bbox'][3]:
 			target_anno = self.target_choice(idx, search_anno)
 		return target_anno
 
@@ -75,8 +82,10 @@ class TrainYtb(Dataset):
 		return np_array
 
 	def pil_to_tensor(self, pil_img):
+		_, size = pil_img.size
+		size = int(round(size * 0.2)) # 0.2 because: 1280 / 256 = 0.2
 		trans = transforms.Compose([
-			transforms.Resize((256, 256), interpolation=0),
+			transforms.Resize((size, size), interpolation=0),
 			transforms.ToTensor()
 		])
 		return trans(pil_img) 
@@ -115,7 +124,7 @@ class TrainYtb(Dataset):
 		target = self.pil_to_tensor(target)
 		mask = self.pil_to_tensor(mask)
 		# build score label
-		score_label = self.label_helper.build_score_label(mask, search_anno['object_size'])
+		score_label = self.label_helper.build_score_label(target, mask)
 		return target, search, mask, score_label
 
 
