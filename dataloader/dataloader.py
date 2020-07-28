@@ -115,15 +115,15 @@ class TrainYtb(Dataset):
 		target = self.pil_to_tensor(target)
 		mask = self.pil_to_tensor(mask)
 		# build score label
-		score_label = self.label_helper.build_score_label(mask, search_anno['object_size'])
+		score_label = self.label_helper.BuildLabels(mask, search_anno['object_size'])
 		return target, search, mask, score_label
 
 
 train_dataset = TrainYtb()
 train_loader = DataLoader(dataset=train_dataset,
-                          batch_size=PARS.batch,
-                          num_workers=4,
-                          shuffle=True)
+						  batch_size=PARS.batch,
+						  num_workers=4,
+						  shuffle=False)
 
 
 def main():

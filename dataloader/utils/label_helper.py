@@ -3,15 +3,19 @@ import torch.nn.functional as F
 
 
 class ScoreLabelHelper():
+	'''
+	TODO:
+	* Make more competemt score builder
+	'''
 	def __init__(self):
 		self.Lpad = 256/4
-		self.Lcorr=5
+		self.Lcorr= 5
 		self.Lstr = (2*self.Lpad)/(5-1)
 		self.Mpad = 256/8
-		self.Mcorr=17
+		self.Mcorr= 17
 		self.Mstr = (256+2*self.Mpad-128)/(17-1)
 		self.Spad = 0
-		self.Scorr=25
+		self.Scorr= 25
 		self.Sstr = (256-64)/(25-1)
 
 	def _size_list_(self, mask, size):
@@ -31,6 +35,14 @@ class ScoreLabelHelper():
 			quit()
 		return size_list
 
+	def _norm_label_(self, x):
+		max_value = x.max()
+		out = x / max_value
+		ones = (out == 1.).float()
+		half = (out >= 0.6).float()
+		out = (ones + half) / 2
+		return out
+
 	def _build_label_(self, mask, size, corr_size, pad, stride):
 		mask = F.pad(input=mask, pad=(pad, pad, pad, pad), mode='constant', value=0)
 		j_tensors_list = list()
@@ -41,6 +53,7 @@ class ScoreLabelHelper():
 				j_tensor = torch.cat([j_tensor, ij], dim=0)
 			j_tensors_list.append(j_tensor)
 		out_tensor = torch.stack(j_tensors_list)
+		out_tensor = self._norm_label_(out_tensor)
 		print(out_tensor.shape)
 		return out_tensor
 
