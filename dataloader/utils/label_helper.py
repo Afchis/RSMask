@@ -79,4 +79,4 @@ if __name__ == '__main__':
 	score_helper = ScoreLabelHelper()
 	out = score_helper.BuildLabels(mask, size='large')
 	print(out['small'])
-	
+

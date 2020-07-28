@@ -74,9 +74,9 @@ class TrainYtb(Dataset):
 			np_array = np.zeros((width, height))
 		return np_array
 
-	def pil_to_tensor(self, pil_img):
+	def pil_to_tensor(self, pil_img, size=256):
 		trans = transforms.Compose([
-			transforms.Resize((256, 256), interpolation=0),
+			transforms.Resize((size, size), interpolation=0),
 			transforms.ToTensor()
 		])
 		return trans(pil_img) 
