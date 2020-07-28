@@ -11,23 +11,15 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision
 import torchvision.transforms as transforms
 
-from utils.label_helper import ScoreLabelHelper
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--data_path", type=str, default="ignore/data/ytb_vos/train/", help="data path")
-parser.add_argument("--batch", type=int, default=16, help="batch size")
-PARS = parser.parse_args()
-
-with open(PARS.data_path + "ytb.json") as data_file:
-	train_json = json.load(data_file)
+from .utils.label_helper import ScoreLabelHelper
 
 
 class TrainYtb(Dataset):
-	def __init__(self):
+	def __init__(self, data_path):
 		super().__init__()
-		self.path = PARS.data_path
-		self.json = train_json
+		self.path = data_path
+		with open(data_path + "ytb.json") as data_file:
+			self.json = json.load(data_file)
 		self.border = (0, 280, 0, 280)
 		self.label_helper = ScoreLabelHelper()
 
@@ -97,44 +89,42 @@ class TrainYtb(Dataset):
 		target = Image.open(self.path + 'JPEGImages/' + target_anno['file_name'])
 		target = ImageOps.expand(target, border=self.border)
 		target = self.crop_target(target, target_anno)
-		"""
-		# build target with bounding box
-		target_wb = target.copy()
-		target_wb_drow = ImageDraw.Draw(target_wb)
-		target_wb_drow.rectangle([target_anno['bbox'][0], target_anno['bbox'][1]+280, 
-								  target_anno['bbox'][0]+target_anno['bbox'][2], 
-								  target_anno['bbox'][1]+target_anno['bbox'][3]+280], 
-								 fill=None, outline=(255, 0, 0), width=5)
-		"""
 		# build mask for search (RLE to gray scale:[0, 1] PIL.Image) 1x1280x1280
-		mask = self.Rle_to_numpy(search_anno['segmentation']['counts'], search_anno['segmentation']['size'])
-		mask = Image.fromarray(mask)
-		mask = ImageOps.expand(mask, border=self.border)
+		if search_anno['object_size'] != None:
+			mask = self.Rle_to_numpy(search_anno['segmentation']['counts'], search_anno['segmentation']['size'])
+			mask = Image.fromarray(mask)
+			mask = ImageOps.expand(mask, border=self.border)
 		# transforms with save size ratio
 		search = self.pil_to_tensor(search)
 		target = self.pil_to_tensor(target)
-		mask = self.pil_to_tensor(mask)
+		if search_anno['object_size'] != None:
+			mask = self.pil_to_tensor(mask)
+		else:
+			mask = torch.zeros_like(search)
 		# build score label
-		score_label = self.label_helper.BuildLabels(mask, search_anno['object_size'])
-		return target, search, mask, score_label
+		score_labels = self.label_helper.BuildLabels(mask, search_anno['object_size'])
+		return target, search, mask, score_labels
 
 
-train_dataset = TrainYtb()
-train_loader = DataLoader(dataset=train_dataset,
-						  batch_size=PARS.batch,
-						  num_workers=4,
-						  shuffle=False)
+def Loader(data_path, batch_size, shuffle=False):
+	print("Initiate DataLoader")
+	train_dataset = TrainYtb(data_path)
+	train_loader = DataLoader(dataset=train_dataset,
+							  batch_size=batch_size,
+							  num_workers=4,
+							  shuffle=shuffle)
+	print("Data len:", len(train_loader))
+	return train_loader
 
 
 def main():
 	data = TrainYtb()
 	target, search, mask, score_label = data[16]
 	return score_label
-print('TODO: DataLoader and show PIL.Images')
+# print('dataloader.py TODO: DataLoader and show PIL.Images')
 
 
 if __name__ == '__main__':
-	score_label = main()
-	print(score_label)
+	main()
 
  	

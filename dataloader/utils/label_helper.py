@@ -54,20 +54,20 @@ class ScoreLabelHelper():
 			j_tensors_list.append(j_tensor)
 		out_tensor = torch.stack(j_tensors_list)
 		out_tensor = self._norm_label_(out_tensor)
-		print(out_tensor.shape)
 		return out_tensor
 
 	def BuildLabels(self, mask, size):
-		s_l = self._size_list_(mask, size)
-		large_score = self._build_label_(mask, size=256, corr_size=self.Lcorr, pad=int(self.Lpad), stride=self.Lstr)*s_l[0]
-		medium_score = self._build_label_(mask, size=128, corr_size=self.Mcorr, pad=int(self.Mpad), stride=self.Mstr)*s_l[1]
-		small_score = self._build_label_(mask, size=64, corr_size=self.Scorr, pad=int(self.Spad), stride=self.Sstr)*s_l[2]
-		score_dict = {
-			'large' : large_score,
-			'medium' : medium_score,
-			'small' : small_score
-		}
-		return score_dict
+		if size == None:
+			large_score = torch.zeros([1, self.Lcorr, self.Lcorr])
+			medium_score = torch.zeros([1, self.Mcorr, self.Mcorr])
+			small_score = torch.zeros([1, self.Scorr, self.Scorr])
+			return large_score, medium_score, small_score
+		else:
+			s_l = self._size_list_(mask, size)
+			large_score = self._build_label_(mask, size=256, corr_size=self.Lcorr, pad=int(self.Lpad), stride=self.Lstr)*s_l[0]
+			medium_score = self._build_label_(mask, size=128, corr_size=self.Mcorr, pad=int(self.Mpad), stride=self.Mstr)*s_l[1]
+			small_score = self._build_label_(mask, size=64, corr_size=self.Scorr, pad=int(self.Spad), stride=self.Sstr)*s_l[2]
+			return large_score, medium_score, small_score
 
 
 

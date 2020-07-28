@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .model_parts import *
+from .model_parts import Backbone, ScoreBranch, MaskBranch
 
 
 class RSiamMask(nn.Module):
@@ -29,11 +29,19 @@ class RSiamMask(nn.Module):
 	def _sharp_model_(self, target, search):
 		raise NotImplementedError
 
-	def forward(self, x):
+	def forward(self, target, search):
 		if self.model == 'base': 
-			return self._base_model_(inputs)
+			return self._base_model_(target, search)
 		elif self.model == 'sharp':
-			return self._sharp_model_(inputs)
-		else
+			return self._sharp_model_("inputs")
+		else:
 			print("Please choise model in parser: 'base' or 'sharp'")
 			quit()
+
+
+if __name__ == '__main__':
+	model = RSiamMask(model='base')
+	target = torch.rand([1, 3, 256, 256])
+	search = torch.rand([1, 3, 256, 256])
+	out = model(target, search)
+	print(out)
