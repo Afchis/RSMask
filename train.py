@@ -9,8 +9,9 @@ from loss_metric.losses import ScoreLoss
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data", type=str, default="ignore/data/ytb_vos/train/", help="data path")
-parser.add_argument("--b", type=int, default=1, help="batch size")
-parser.add_argument("--device", type=str, default="cuda:0", help="device")
+parser.add_argument("--b", type=int, default=16, help="Batch size")
+parser.add_argument("--n_w", type=int, default=16, help="Num workers")
+parser.add_argument("--device", type=str, default="cuda:0", help="Device")
 parser.add_argument("--model", type=str, default="base", help="Choise model: 'base' or 'sharp'")
 parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
 parser.add_argument("--lr_step", type=int, default=3000, help="Learning rate scheduler step")
@@ -26,7 +27,7 @@ model = model.to(device)
 
 
 # init dataloader
-train_loader = Loader(data_path=PARS.data, batch_size=PARS.b)
+train_loader = Loader(data_path=PARS.data, batch_size=PARS.b, num_workers=PARS.n_w)
 
 
 # init optimizer and lr_scheduler
@@ -52,7 +53,7 @@ def main():
 			optimizer.step()
 			optimizer.zero_grad()
 			e_loss += loss.item()
-			if e_iter % 10 == 0:
+			if e_iter % 100 == 0:
 				print("epoch: ", epoch, "iter: ", e_iter, "loss: ", e_loss/e_iter, "|||", loss.item())
 
 

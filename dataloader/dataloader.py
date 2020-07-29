@@ -106,12 +106,12 @@ class TrainYtb(Dataset):
 		return target, search, mask, score_labels
 
 
-def Loader(data_path, batch_size, shuffle=False):
+def Loader(data_path, batch_size, num_workers, shuffle=False):
 	print("Initiate DataLoader")
 	train_dataset = TrainYtb(data_path)
 	train_loader = DataLoader(dataset=train_dataset,
 							  batch_size=batch_size,
-							  num_workers=4,
+							  num_workers=num_workers,
 							  shuffle=shuffle)
 	print("Data len:", len(train_loader))
 	return train_loader

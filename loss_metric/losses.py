@@ -23,6 +23,7 @@ def select_cross_entropy_loss(pred, label):
 	return loss_pos * 0.5 + loss_neg * 0.5
 
 def cross_entropy_loss(pred, label):
+	label = label.reshape(pred.shape)
 	return F.binary_cross_entropy(pred, label)
 
 def ScoreLoss(preds, labels):
