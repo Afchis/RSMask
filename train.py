@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 from dataloader.dataloader import Loader
 from model.model_head import RSiamMask
@@ -19,11 +19,13 @@ parser.add_argument("--lr", type=float, default=0.05, help="Learning rate")
 parser.add_argument("--lr_step", type=int, default=100, help="Learning rate scheduler step")
 parser.add_argument("--gamma", type=int, default=0.9, help="Learning rate scheduler gamma")
 parser.add_argument("--epochs", type=int, default=1000, help="Num epochs")
+parser.add_argument("--tb", type=str, default=None, help="Tensorboard")
 PARS = parser.parse_args()
 
 
-# init SummaryWriter()
-
+# init tensorboard: --logdir=runs
+if PARS.tb != None:
+	writer = SummaryWriter()
 
 # init model
 device = torch.device(PARS.device if torch.cuda.is_available() else "cpu")
@@ -51,7 +53,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=PARS.lr_step, g
 
 def main():
 	for epoch in range(PARS.epochs):
-
+		tb_iter = 0
 		e_iter = 0
 		e_loss = 0
 		for i, data in enumerate(train_loader):
@@ -71,6 +73,9 @@ def main():
 			e_loss += loss.item()
 			if e_iter % 10 == 0:
 				print("epoch: ", epoch, "iter: ", e_iter, "loss: ", e_loss/e_iter, "|||", loss.item())
+				if PARS.tb != None:
+					tb_iter += 1
+					writer.add_scalars('%s_loss' % PARS.tb, {'train' : loss}, iter)
 		torch.save(model.state_dict(), 'ignore/weights/%s.pth' % PARS.w)
 
 
