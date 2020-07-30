@@ -63,26 +63,6 @@ def select_mask_logistic_loss(preds, mask_label, score_label, kernel_size=256, p
 	return F.binary_cross_entropy(preds, mask_labels).mean()
 
 
-
-	# weight = weight.view(-1)
-	# pos = Variable(weight.data.eq(1).nonzero().squeeze())
-	# if pos.nelement() == 0: return p_m.sum() * 0, p_m.sum() * 0, p_m.sum() * 0
-
-	# p_m = p_m.permute(0, 2, 3, 1).contiguous().view(-1, 1, o_sz, o_sz)
-	# p_m = torch.index_select(p_m, 0, pos)
-
-	# p_m = nn.UpsamplingBilinear2d(size=[g_sz, g_sz])(p_m)
-	# p_m = p_m.view(-1, g_sz * g_sz)
-
-	# mask_uf = F.unfold(mask, (g_sz, g_sz), padding=32, stride=8)
-	# mask_uf = torch.transpose(mask_uf, 1, 2).contiguous().view(-1, g_sz * g_sz)
-
-	# mask_uf = torch.index_select(mask_uf, 0, pos)
-	# afchi_label = mask_uf
-	# afchi_mask = (p_m >= 0).float()
-	# loss = F.soft_margin_loss(p_m, mask_uf)
-	# return loss, afchi_label, afchi_mask
-
 def MaskLoss(preds, mask_label, score_labels):
 	pred_large, pred_medium, pred_small = preds
 	label_large, label_medium, label_small = score_labels

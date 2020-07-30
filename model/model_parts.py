@@ -144,9 +144,6 @@ class MaskBranch(nn.Module):
 		large_out = self.mask_branch(large_out)
 		medium_out = self.mask_branch(medium_out)
 		small_out = self.mask_branch(small_out)
-		# large_out = F.log_softmax(large_out, dim=1)
-		# medium_out = F.log_softmax(medium_out, dim=1)
-		# small_out = F.log_softmax(small_out, dim=1)
 		return large_out, medium_out, small_out
 
 	def BaseModelReshape(self, x):
