@@ -1,4 +1,5 @@
 ignore/
+runs/
 # core files
 core.*
 # Byte-compiled / optimized / DLL files
