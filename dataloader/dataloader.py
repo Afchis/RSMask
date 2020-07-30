@@ -100,20 +100,20 @@ class TrainYtb(Dataset):
 		if search_anno['object_size'] != None:
 			mask = self.pil_to_tensor(mask)
 		else:
-			mask = torch.zeros_like(search)
+			mask = torch.zeros([1, 256, 256])
 		# build score label
 		score_labels = self.label_helper.BuildLabels(mask, search_anno['object_size'])
 		return target, search, mask, score_labels
 
 
-def Loader(data_path, batch_size, num_workers, shuffle=False):
+def Loader(data_path, batch_size, num_workers, shuffle=True):
 	print("Initiate DataLoader")
 	train_dataset = TrainYtb(data_path)
 	train_loader = DataLoader(dataset=train_dataset,
 							  batch_size=batch_size,
 							  num_workers=num_workers,
 							  shuffle=shuffle)
-	print("Data len:", len(train_loader))
+	print("Iters in epoch: ", len(train_loader))
 	return train_loader
 
 

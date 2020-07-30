@@ -6,10 +6,11 @@ from .resnet import resnet50
 
 
 def Correlation_func(t_f, s_f, padding=0): # s_f-->search_feat, t_f-->target_feat
+	b = t_f.size(0)
 	t_f = t_f.reshape(-1, 1, t_f.size(2), t_f.size(3))
 	s_f = s_f.reshape(1, -1, s_f.size(2), s_f.size(3))
 	out = F.conv2d(s_f, t_f, groups=t_f.size(0), padding=padding)
-	out = out.reshape(-1, s_f.size(1), out.size(2), out.size(3))
+	out = out.reshape(b, -1, out.size(2), out.size(3))
 	return out
 
 
@@ -115,18 +116,48 @@ class MaskBranch(nn.Module):
 			nn.Conv2d(256, 256, kernel_size=1),
 			nn.BatchNorm2d(256),
 			nn.ReLU(),
-			nn.Conv2d(256, 64*64, kernel_size=1)
+			nn.Conv2d(256, 64*64, kernel_size=1),
+			nn.Sigmoid()
 			)
+
+	def _conv_target_(self, target_feats):
+		large_feat, medium_feat, small_feat = target_feats
+		large_feat = self.conv_target(large_feat)
+		medium_feat = self.conv_target(medium_feat)
+		small_feat = self.conv_target(small_feat)
+		return large_feat, medium_feat, small_feat
+
+	def _corr_(self, target_feats, search_feat):
+		'''
+		TODO:
+		** do padding for medium_corr and check padding for large_corr:
+			* for medium_corr padding need change score_labels.shape in dataloader.py
+		'''
+		large_feat, medium_feat, small_feat = target_feats
+		large_corr = Correlation_func(large_feat, search_feat, padding=2)
+		medium_corr = Correlation_func(medium_feat, search_feat)
+		small_corr = Correlation_func(small_feat, search_feat)
+		return large_corr, medium_corr, small_corr
+
+	def _branch_(self, outs):
+		large_out, medium_out, small_out = outs
+		large_out = self.mask_branch(large_out)
+		medium_out = self.mask_branch(medium_out)
+		small_out = self.mask_branch(small_out)
+		# large_out = F.log_softmax(large_out, dim=1)
+		# medium_out = F.log_softmax(medium_out, dim=1)
+		# small_out = F.log_softmax(small_out, dim=1)
+		return large_out, medium_out, small_out
 
 	def BaseModelReshape(self, x):
 		raise NotImplementedError
 
-	def forward(self, x):
-		target_feat = self.conv_target(target_feat)
+	def forward(self, target_feats, search_feat):
+		target_feats = self._conv_target_(target_feats)
 		search_feat = self.conv_search(search_feat)
-		out = Correlation_func(target_feat, search_feat)
-		out = self.branch(out)
-		return out
+		outs = self._corr_(target_feats, search_feat)
+		outs = self._branch_(outs)
+		return outs
 
 	def forward_sharp(self, x):
 		raise NotImplementedError

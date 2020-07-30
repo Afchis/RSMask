@@ -24,7 +24,8 @@ class RSiamMask(nn.Module):
 		# Score Branch:
 		pred_scores = self.score_branch(target_feats, search_feat)
 		# Mask Branch:
-		return pred_scores
+		pred_masks = self.mask_branch(target_feats, search_feat)
+		return pred_scores, pred_masks
 
 	def _sharp_model_(self, target, search):
 		raise NotImplementedError

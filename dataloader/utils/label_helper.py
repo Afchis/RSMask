@@ -8,7 +8,7 @@ class ScoreLabelHelper():
 	* Make more competemt score builder
 	'''
 	def __init__(self):
-		self.Lpad = 256/4
+		self.Lpad = 256/2
 		self.Lcorr= 5
 		self.Lstr = (2*self.Lpad)/(5-1)
 		self.Mpad = 256/8
@@ -53,7 +53,7 @@ class ScoreLabelHelper():
 				j_tensor = torch.cat([j_tensor, ij], dim=0)
 			j_tensors_list.append(j_tensor)
 		out_tensor = torch.stack(j_tensors_list)
-		out_tensor = self._norm_label_(out_tensor)
+		out_tensor = self._norm_label_(out_tensor).unsqueeze(0)
 		return out_tensor
 
 	def BuildLabels(self, mask, size):
