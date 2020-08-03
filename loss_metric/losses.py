@@ -49,7 +49,7 @@ def make_masks(mask_label, kernel_size, padding, corr_size):
 def select_mask_logistic_loss(preds, mask_label, score_label, kernel_size=256, padding=128, corr_size=5):
 	score_label = score_label.reshape(-1)
 	pos = Variable(score_label.data.eq(1).nonzero().squeeze())
-	if pos.nelement() == 0: return 0
+	if pos.nelement() == 0: return torch.tensor(0).cuda()
 
 	preds = preds.permute(0, 2, 3, 1).contiguous().reshape(-1, 1, 64, 64)
 	preds = torch.index_select(preds, 0, pos)
@@ -57,7 +57,6 @@ def select_mask_logistic_loss(preds, mask_label, score_label, kernel_size=256, p
 	mask_labels = make_masks(mask_label, kernel_size=kernel_size, padding=padding, corr_size=corr_size)
 	mask_labels = mask_labels.permute(1, 0, 2, 3, 4).contiguous().reshape(-1, 1, kernel_size, kernel_size)
 	mask_labels = torch.index_select(mask_labels, 0, pos)
-
 	if kernel_size != 64:
 		preds = nn.UpsamplingBilinear2d(size=[kernel_size, kernel_size])(preds)
 	return F.binary_cross_entropy(preds, mask_labels).mean()

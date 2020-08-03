@@ -23,9 +23,6 @@ class TrainYtb(Dataset):
 		self.border = (0, 280, 0, 280)
 		self.label_helper = ScoreLabelHelper()
 
-	def __len__(self):
-		return len(self.json)
-
 	def target_choice(self, idx, search_anno):
 		target_anno = random.choice(self.json[idx]['object_anno'])
 		if target_anno['bbox'] == None:
@@ -80,12 +77,12 @@ class TrainYtb(Dataset):
 		* ImageOps.expand(search, border=self.border) add gray border.
 		'''
 		# random Search img
-		search_anno = random.choice(self.json[idx]['object_anno'])
+		search_anno = random.choice(self.json[200]['object_anno'])
 		search = Image.open(self.path + 'JPEGImages/' + search_anno['file_name'])
 		search = ImageOps.expand(search, border=self.border)
 		# random not None Target img
 		anno_check = search_anno
-		target_anno = self.target_choice(idx, search_anno)
+		target_anno = self.target_choice(200, search_anno)
 		target = Image.open(self.path + 'JPEGImages/' + target_anno['file_name'])
 		target = ImageOps.expand(target, border=self.border)
 		target = self.crop_target(target, target_anno)
@@ -104,6 +101,10 @@ class TrainYtb(Dataset):
 		# build score label
 		score_labels = self.label_helper.BuildLabels(mask, search_anno['object_size'])
 		return target, search, mask, score_labels
+
+	def __len__(self):
+		# return len(self.json)
+		return 1
 
 
 def Loader(data_path, batch_size, num_workers, shuffle=True):
